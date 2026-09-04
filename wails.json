@@ -1,0 +1,20 @@
+{
+  "$schema": "https://wails.io/schemas/config.json",
+  "name": "DaoGitAPI",
+  "outputfilename": "DaoGitAPI",
+  "frontend:install": "cmd /c echo skip",
+  "frontend:build": "cmd /c echo skip",
+  "frontend:dev:watcher": "cmd /c echo skip",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Daomak",
+    "email": "daomak@qq.com"
+  },
+  "info": {
+    "companyName": "Daomak",
+    "productName": "DaoGitAPI",
+    "productVersion": "1.0.0",
+    "fileVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Daomak"
+  }
+}
