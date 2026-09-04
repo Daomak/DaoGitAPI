@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DaoGitAPI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #f5f7fa;
+    --sidebar: #ffffff;
+    --sidebar-hover: #f1f5f9;
+    --sidebar-active: #eff6ff;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --purple: #8b5cf6;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    overflow: hidden;
+  }
+  .app {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* 侧边栏 */
+  .sidebar {
+    width: 220px;
+    background: var(--sidebar);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar-logo {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .sidebar-logo-text {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 10px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+  .platform-selector {
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .platform-selector-label {
+    font-size: 10px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 12px 8px;
+    font-weight: 700;
+  }
+  .platform-selector-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--sidebar-hover);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .platform-selector-box:hover {
+    background: #e2e8f0;
+  }
+  .platform-icon {
+    display: flex;
+    align-items: center;
+  }
+  .platform-selector-box .repo-arrow {
+    margin-left: auto;
+  }
+  .repo-selector {
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .repo-selector-label {
+    font-size: 10px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 12px 8px;
+    font-weight: 700;
+  }
+  .repo-selector-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--sidebar-hover);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .repo-selector-box:hover {
+    background: #e2e8f0;
+  }
+  .repo-arrow {
+    font-size: 10px;
+    color: var(--text-light);
+  }
+  .repo-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 200;
+    margin-top: 4px;
+  }
+  .repo-dropdown.show { display: block; }
+  .repo-dropdown-loading {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 12px;
+  }
+  .repo-dropdown-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border);
+  }
+  .repo-dropdown-item:last-child { border-bottom: none; }
+  .repo-dropdown-item:hover { background: var(--sidebar-hover); }
+  .repo-dropdown-item-name { font-weight: 500; }
+  .repo-dropdown-item-desc {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .nav-section {
+    font-size: 10px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 18px 14px 8px;
+    font-weight: 700;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .nav-item:hover {
+    background: var(--sidebar-hover);
+    color: var(--text);
+  }
+  .nav-item.active {
+    background: var(--sidebar-active);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .nav-item.active svg { color: var(--primary); }
+  .nav-item svg {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: var(--text-light);
+  }
+  .sidebar-user {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { color: var(--text); font-size: 13px; font-weight: 600; }
+  .user-platform { color: var(--text-light); font-size: 11px; cursor: pointer; }
+  .sidebar-user { position: relative; cursor: pointer; }
+  .platform-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 8px;
+    right: 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: none;
+    overflow: hidden;
+    z-index: 100;
+  }
+  .platform-menu.show { display: block; }
+  .platform-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .platform-menu-item:hover { background: var(--sidebar-hover); }
+
+  /* 主内容区 */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    height: 56px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .platform-switch {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .platform-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .platform-btn.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .search-box {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 14px 8px 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-box input:focus { border-color: var(--primary); }
+  .search-box svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+  }
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-ghost { background: #f1f5f9; color: var(--text); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* 内容区 */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .content::-webkit-scrollbar { width: 8px; }
+  .content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* 卡片 */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title { font-weight: 600; font-size: 15px; }
+  .card-body { padding: 16px 20px; }
+
+  /* 统计卡片 */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  /* 列表项 */
+  .list-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item:hover { background: #f8fafc; }
+  .list-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .list-item-content { flex: 1; min-width: 0; }
+  .list-item-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .list-item-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .list-item-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-light);
+    align-items: center;
+  }
+
+  /* 标签 */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-success { background: #d1fae5; color: #059669; }
+  .badge-warning { background: #fef3c7; color: #d97706; }
+  .badge-danger { background: #fee2e2; color: #dc2626; }
+  .badge-info { background: #dbeafe; color: #2563eb; }
+  .badge-gray { background: #f3f4f6; color: #6b7280; }
+  .badge-purple { background: #ede9fe; color: #7c3aed; }
+
+  /* 弹窗 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15,23,42,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    min-width: 440px;
+    max-width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+  .form-textarea { min-height: 100px; resize: vertical; }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    color: #1f2937;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    animation: toastIn 0.2s ease;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+  }
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+    font-size: 13px;
+  }
+
+  /* 文件浏览器 */
+  .file-path {
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-family: monospace;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .file-item:hover { background: #f8fafc; }
+
+  /* 标签页 */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-nav">
+      <div class="platform-selector">
+        <div class="platform-selector-label">平台</div>
+        <div class="platform-selector-box" onclick="togglePlatformMenu()">
+          <span class="platform-icon" id="platform-icon-top">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#24292e"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          </span>
+          <span id="platform-name-top">GitHub</span>
+          <span class="repo-arrow">▾</span>
+        </div>
+        <div class="platform-menu" id="platform-menu-top" style="position:absolute;top:100%;left:0;right:0;bottom:auto;">
+          <div class="platform-menu-item" onclick="event.stopPropagation();switchPlatform('github')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+          </div>
+          <div class="platform-menu-item" onclick="event.stopPropagation();switchPlatform('gitee')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#c71d23"><path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.982 0 1.778-.796 1.778-1.778v-.296a.593.593 0 0 0-.592-.593h-4.15a.59.59 0 0 1-.592-.592v-1.482a.593.593 0 0 1 .593-.592h6.815c.327 0 .593.265.593.592v3.408a4 4 0 0 1-4 4H5.926a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.445-4.444h8.296Z"/></svg>
+            Gitee
+          </div>
+        </div>
+      </div>
+      <div class="nav-section">仓库</div>
+      <div class="nav-item active" data-page="repos" onclick="switchPage('repos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        仓库管理
+      </div>
+      <div class="nav-section" id="repo-functions-section" style="display:none;">仓库功能</div>
+      <div class="nav-item repo-only" data-page="files" onclick="switchPage('files')" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        文件管理
+      </div>
+      <div class="nav-item repo-only" data-page="commits" onclick="switchPage('commits')" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>
+        提交记录
+      </div>
+      <div class="nav-item repo-only" data-page="issues" onclick="switchPage('issues')" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Issue
+      </div>
+      <div class="nav-item repo-only" data-page="pulls" onclick="switchPage('pulls')" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M18 9v1a9 9 0 0 1-9 9H6"/></svg>
+        Pull Request
+      </div>
+      <div class="nav-item repo-only" data-page="releases" onclick="switchPage('releases')" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Release
+      </div>
+      <div class="nav-section">工具</div>
+      <div class="nav-item" data-page="settings" onclick="switchPage('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        设置
+      </div>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box" id="top-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="global-search" placeholder="搜索仓库..." onkeyup="handleGlobalSearch()">
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">刷新</button>
+      </div>
+    </div>
+    <div class="content" id="content">
+      <div class="loading"><div class="loading-spinner"></div>加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗容器 -->
+<div id="modals"></div>
+
+<script>
+const go = window.go && window.go.main && window.go.main.App;
+let currentPlatform = 'github';
+let currentPage = 'repos';
+let currentRepo = null;
+let currentOwner = null;
+let currentFilePath = '';
+let fileHistory = [];
+let userInfo = null;
+
+function showRepoFunctions() {
+  document.getElementById('repo-functions-section').style.display = 'block';
+  document.querySelectorAll('.repo-only').forEach(el => {
+    el.style.display = 'flex';
+  });
+}
+
+// 平台切换
+function switchPlatform(platform) {
+  currentPlatform = platform;
+  document.getElementById('platform-menu-top').classList.remove('show');
+  currentRepo = null;
+  currentOwner = null;
+  document.getElementById('repo-functions-section').style.display = 'none';
+  document.querySelectorAll('.repo-only').forEach(el => {
+    el.style.display = 'none';
+  });
+  updatePlatformUI();
+  loadUserInfo();
+  refreshCurrent();
+}
+
+function togglePlatformMenu() {
+  const menu = document.getElementById('platform-menu-top');
+  menu.classList.toggle('show');
+}
+
+function updatePlatformUI() {
+  const platformNameTop = document.getElementById('platform-name-top');
+  const platformIconTop = document.getElementById('platform-icon-top');
+  if (currentPlatform === 'github') {
+    if (platformNameTop) platformNameTop.textContent = 'GitHub';
+    if (platformIconTop) platformIconTop.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#24292e"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>';
+  } else {
+    if (platformNameTop) platformNameTop.textContent = 'Gitee';
+    if (platformIconTop) platformIconTop.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#c71d23"><path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.982 0 1.778-.796 1.778-1.778v-.296a.593.593 0 0 0-.592-.593h-4.15a.59.59 0 0 1-.592-.592v-1.482a.593.593 0 0 1 .593-.592h6.815c.327 0 .593.265.593.592v3.408a4 4 0 0 1-4 4H5.926a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.445-4.444h8.296Z"/></svg>';
+  }
+}
+
+// 页面切换
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  const searchBox = document.getElementById('top-search-box');
+  if (searchBox) {
+    searchBox.style.display = (page === 'repos') ? 'block' : 'none';
+  }
+  refreshCurrent();
+}
+
+function refreshCurrent() {
+  switch(currentPage) {
+    case 'repos': renderRepos(); break;
+    case 'files': renderFiles(); break;
+    case 'commits': renderCommits(); break;
+    case 'issues': renderIssues(); break;
+    case 'pulls': renderPulls(); break;
+    case 'releases': renderReleases(); break;
+    case 'settings': renderSettings(); break;
+  }
+}
+
+// 用户信息
+let isLoggedIn = false;
+
+async function loadUserInfo() {
+  if (!go) return;
+  const result = await go.GetUserInfo(currentPlatform);
+  try {
+    const data = JSON.parse(result);
+    if (!data.error) {
+      userInfo = data;
+      isLoggedIn = true;
+    } else {
+      isLoggedIn = false;
+    }
+  } catch(e) {
+    isLoggedIn = false;
+  }
+}
+
+// 仓库列表
+let allReposCache = [];
+
+async function renderRepos() {
+  const c = document.getElementById('content');
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  if (!go) {
+    c.innerHTML = '<div class="empty">运行环境初始化中，请稍候...</div>';
+    return;
+  }
+  try {
+    const result = await go.GetRepos(currentPlatform);
+    const data = JSON.parse(result);
+    if (data.error) {
+      c.innerHTML = `<div class="empty">加载失败: ${data.error}<br><br>请先在「设置」中配置 ${currentPlatform === 'github' ? 'GitHub' : 'Gitee'} Token</div>`;
+      return;
+    }
+    allReposCache = Array.isArray(data) ? data : [];
+    renderRepoList(allReposCache);
+  } catch(e) {
+    c.innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderRepoList(repos) {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">仓库管理</div>
+        <div class="page-subtitle">共 ${allReposCache.length} 个仓库</div>
+      </div>
+      <button class="btn btn-primary" onclick="showCreateRepo()">+ 新建仓库</button>
+    </div>
+    <div class="card">
+      <div id="repo-list-container">
+        ${repos.map(r => `
+          <div class="list-item" onclick="selectRepo('${r.full_name || r.name}', '${r.name}')">
+            <div class="list-item-icon" style="background:${r.private ? '#fef2f2' : '#f0fdf4'};color:${r.private ? '#dc2626' : '#16a34a'};">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">${r.name}</div>
+              <div class="list-item-desc">${r.description || '无描述'}</div>
+            </div>
+            <div class="list-item-meta">
+              <span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:${r.private ? '#fef2f2' : '#f0fdf4'};color:${r.private ? '#dc2626' : '#16a34a'};">${r.private ? '私有' : '公开'}</span>
+              <span>⭐ ${r.stargazers_count || 0}</span>
+              <span>🍴 ${r.forks_count || 0}</span>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showEditRepo('${r.full_name || r.name}', '${r.name}', '${(r.description || '').replace(/'/g, "\\'")}', ${r.private})">编辑</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRepo('${r.full_name || r.name}','${r.name}')">删除</button>
+            </div>
+          </div>
+        `).join('') || '<div class="empty">无匹配仓库</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function filterRepos() {
+  const kw = document.getElementById('global-search').value.toLowerCase().trim();
+  const filtered = kw ? allReposCache.filter(r => r.name.toLowerCase().includes(kw)) : allReposCache;
+  const container = document.getElementById('repo-list-container');
+  if (!container) return;
+  container.innerHTML = filtered.map(r => `
+    <div class="list-item" onclick="selectRepo('${r.full_name || r.name}', '${r.name}')">
+      <div class="list-item-icon" style="background:${r.private ? '#fef2f2' : '#f0fdf4'};color:${r.private ? '#dc2626' : '#16a34a'};">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      </div>
+      <div class="list-item-content">
+        <div class="list-item-title">${r.name}</div>
+        <div class="list-item-desc">${r.description || '无描述'}</div>
+      </div>
+      <div class="list-item-meta">
+        <span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:${r.private ? '#fef2f2' : '#f0fdf4'};color:${r.private ? '#dc2626' : '#16a34a'};">${r.private ? '私有' : '公开'}</span>
+        <span>⭐ ${r.stargazers_count || 0}</span>
+        <span>🍴 ${r.forks_count || 0}</span>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRepo('${r.full_name || r.name}','${r.name}')">删除</button>
+      </div>
+    </div>
+  `).join('') || '<div class="empty">无匹配仓库</div>';
+}
+
+function handleGlobalSearch() {
+  if (currentPage === 'repos') {
+    filterRepos();
+  }
+}
+
+function selectRepo(fullName, name) {
+  const parts = fullName.split('/');
+  currentOwner = parts.length > 1 ? parts[0] : fullName;
+  currentRepo = parts.length > 1 ? parts.slice(1).join('/') : name;
+  currentFilePath = '';
+  fileHistory = [];
+  showRepoFunctions();
+  showToast('已选择: ' + name);
+  switchPage('files');
+}
+
+async function deleteRepo(fullName, name) {
+  showConfirm('删除仓库', '确定要删除仓库 ' + name + ' 吗？此操作不可恢复！', async () => {
+    const parts = fullName.split('/');
+    const owner = parts.length > 1 ? parts[0] : fullName;
+    const repo = parts.length > 1 ? parts.slice(1).join('/') : name;
+    const ok = await go.DeleteRepo(currentPlatform, owner, repo);
+    if (ok) {
+      showToast('删除成功');
+      renderRepos();
+    } else {
+      showToast('删除失败');
+    }
+  });
+}
+
+function showCreateRepo() {
+  showModal('新建仓库', `
+    <div class="form-group">
+      <label class="form-label">仓库名称</label>
+      <input type="text" class="form-input" id="new-repo-name" placeholder="输入仓库名称">
+    </div>
+    <div class="form-group">
+      <label class="form-label">描述</label>
+      <input type="text" class="form-input" id="new-repo-desc" placeholder="输入仓库描述">
+    </div>
+    <div class="form-group">
+      <label class="form-label">仓库类型</label>
+      <div style="display:flex;gap:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+          <input type="radio" name="new-repo-type" value="public" checked> 公开
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+          <input type="radio" name="new-repo-type" value="private"> 私有
+        </label>
+      </div>
+    </div>
+  `, async () => {
+    const name = document.getElementById('new-repo-name').value.trim();
+    const desc = document.getElementById('new-repo-desc').value.trim();
+    const priv = document.querySelector('input[name="new-repo-type"]:checked').value === 'private';
+    if (!name) { showToast('请输入仓库名称'); return false; }
+    const result = await go.CreateRepo(currentPlatform, name, desc, priv);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('创建失败: ' + data.error); return false; }
+      showToast('创建成功');
+      renderRepos();
+      return true;
+    } catch(e) {
+      showToast('创建失败');
+      return false;
+    }
+  });
+}
+
+function showEditRepo(fullName, name, description, private) {
+  const parts = fullName.split('/');
+  const owner = parts.length > 1 ? parts[0] : fullName;
+  const repo = parts.length > 1 ? parts.slice(1).join('/') : name;
+  showModal('编辑仓库 - ' + name, `
+    <div class="form-group">
+      <label class="form-label">仓库名称</label>
+      <input type="text" class="form-input" id="edit-repo-name" value="${name}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">描述</label>
+      <input type="text" class="form-input" id="edit-repo-desc" value="${description || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">仓库类型</label>
+      <div style="display:flex;gap:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+          <input type="radio" name="edit-repo-type" value="public" ${!private ? 'checked' : ''}> 公开
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+          <input type="radio" name="edit-repo-type" value="private" ${private ? 'checked' : ''}> 私有
+        </label>
+      </div>
+    </div>
+  `, async () => {
+    const newName = document.getElementById('edit-repo-name').value.trim();
+    const desc = document.getElementById('edit-repo-desc').value.trim();
+    const priv = document.querySelector('input[name="edit-repo-type"]:checked').value === 'private';
+    if (!newName) { showToast('请输入仓库名称'); return false; }
+    const result = await go.UpdateRepo(currentPlatform, owner, repo, newName, desc, priv);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('保存失败: ' + data.error); return false; }
+      showToast('保存成功');
+      renderRepos();
+      return true;
+    } catch(e) {
+      showToast('保存失败');
+      return false;
+    }
+  });
+}
+
+// 文件管理
+async function renderFiles() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetRepoFiles(currentPlatform, currentOwner, currentRepo, currentFilePath);
+  try {
+    const data = JSON.parse(result);
+    if (data.error) {
+      c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`;
+      return;
+    }
+    let html = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">文件管理 - ${currentRepo}</div>
+          <div class="page-subtitle">${currentOwner}/${currentRepo}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="showBranches()">🌿 分支</button>
+          <button class="btn btn-ghost" onclick="goBackDir()">⬅ 返回上级</button>
+          <button class="btn btn-primary" onclick="showNewFile()">新建文件</button>
+          <button class="btn btn-success" onclick="showUploadRepoFile()">上传文件</button>
+          <button class="btn btn-success" onclick="showUploadRepoFolder()">📁 上传文件夹</button>
+          <button class="btn btn-danger" onclick="deleteAllFiles()">🗑 全部删除</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="file-path">/${currentFilePath || ''}</div>
+    `;
+    if (!Array.isArray(data) || data.length === 0) {
+      html += '<div class="empty">空目录</div>';
+    } else {
+      html += data.map(f => `
+        <div class="file-item" onclick="${f.type === 'dir' ? `enterDir('${f.path}')` : `viewFile('${f.path}')`}">
+          <span style="font-size:18px;">${f.type === 'dir' ? '📁' : '📄'}</span>
+          <span style="flex:1;font-size:13px;">${f.name}</span>
+          <span style="font-size:12px;color:var(--text-light);margin-right:12px;">${f.type === 'file' ? formatSize(f.size) : ''}</span>
+          ${f.type === 'file' ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();downloadRepoFile('${f.download_url}','${f.name}')">下载</button>` : ''}
+          <button class="btn btn-danger btn-sm" style="margin-left:8px;" onclick="event.stopPropagation();deleteRepoFile('${f.path}')">删除</button>
+        </div>
+      `).join('');
+    }
+    html += '</div></div>';
+    c.innerHTML = html;
+  } catch(e) {
+    showParseError(c, result, e);
+  }
+}
+
+function enterDir(path) {
+  fileHistory.push(currentFilePath);
+  currentFilePath = path;
+  renderFiles();
+}
+
+function goBackDir() {
+  if (fileHistory.length > 0) {
+    currentFilePath = fileHistory.pop();
+    renderFiles();
+  }
+}
+
+async function viewFile(path) {
+  const content = await go.GetFileContent(currentPlatform, currentOwner, currentRepo, path);
+  showModal('编辑文件 - ' + path, `
+    <div class="form-group">
+      <label class="form-label">文件路径</label>
+      <input type="text" class="form-input" id="edit-file-path" value="${path}" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">文件内容</label>
+      <textarea class="form-textarea" id="edit-file-content" style="min-height:200px;font-family:monospace;">${content || ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">提交说明</label>
+      <input type="text" class="form-input" id="edit-file-message" value="更新文件">
+    </div>
+  `, async () => {
+    const p = document.getElementById('edit-file-path').value;
+    const cont = document.getElementById('edit-file-content').value;
+    const msg = document.getElementById('edit-file-message').value || '更新文件';
+    const result = await go.CreateOrUpdateFile(currentPlatform, currentOwner, currentRepo, p, cont, msg);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('保存失败: ' + data.error); return false; }
+      showToast('保存成功');
+      renderFiles();
+      return true;
+    } catch(e) { showToast('保存失败'); return false; }
+  });
+}
+
+function showNewFile() {
+  showModal('新建文件', `
+    <div class="form-group">
+      <label class="form-label">文件路径（如 docs/readme.md）</label>
+      <input type="text" class="form-input" id="newfile-path" value="${currentFilePath ? currentFilePath + '/' : ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">文件内容</label>
+      <textarea class="form-textarea" id="newfile-content"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">提交说明</label>
+      <input type="text" class="form-input" id="newfile-message" value="新增文件">
+    </div>
+  `, async () => {
+    const p = document.getElementById('newfile-path').value.trim();
+    const cont = document.getElementById('newfile-content').value;
+    const msg = document.getElementById('newfile-message').value || '新增文件';
+    if (!p) { showToast('请输入文件路径'); return false; }
+    const result = await go.CreateOrUpdateFile(currentPlatform, currentOwner, currentRepo, p, cont, msg);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('创建失败: ' + data.error); return false; }
+      showToast('创建成功');
+      renderFiles();
+      return true;
+    } catch(e) { showToast('创建失败'); return false; }
+  });
+}
+
+function showUploadRepoFile() {
+  const modalId = showModal('上传文件到仓库', `
+    <div class="form-group">
+      <label class="form-label">仓库目录</label>
+      <input type="text" class="form-input" id="uploadrepo-path" value="${currentFilePath ? currentFilePath + '/' : ''}" placeholder="留空则上传到根目录">
+    </div>
+    <div class="form-group">
+      <label class="form-label">本地文件</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="uploadrepo-local" readonly>
+        <button class="btn btn-ghost" onclick="browseFile('uploadrepo-local')">浏览</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">提交说明</label>
+      <input type="text" class="form-input" id="uploadrepo-message" value="上传文件">
+    </div>
+    <div id="uploadrepo-progress" style="display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+        <span id="uploadrepo-progress-file">准备上传...</span>
+        <span id="uploadrepo-progress-percent">0%</span>
+      </div>
+      <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+        <div id="uploadrepo-progress-bar" style="height:100%;background:var(--primary);width:0%;transition:width 0.3s;"></div>
+      </div>
+    </div>
+  `, async () => {
+    const p = document.getElementById('uploadrepo-path').value.trim().replace(/\/$/, '');
+    const local = document.getElementById('uploadrepo-local').value;
+    const msg = document.getElementById('uploadrepo-message').value || '上传文件';
+    if (!local) { showToast('请选择文件'); return false; }
+
+    // 自动从本地路径提取文件名，拼接到仓库路径
+    const fileName = local.split(/[\\/]/).pop();
+    const fullPath = p ? p + '/' + fileName : fileName;
+
+    // 显示进度条，禁用按钮
+    document.getElementById('uploadrepo-progress').style.display = 'block';
+    const confirmBtn = document.getElementById(modalId + '-confirm');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '上传中...'; }
+
+    // 监听进度事件
+    const offProgress = window.runtime.EventsOn('upload-progress', (data) => {
+      try {
+        const prog = JSON.parse(data);
+        document.getElementById('uploadrepo-progress-file').textContent = prog.file || '';
+        document.getElementById('uploadrepo-progress-percent').textContent = prog.percent + '%';
+        document.getElementById('uploadrepo-progress-bar').style.width = prog.percent + '%';
+      } catch(e) {}
+    });
+
+    let result;
+    try {
+      result = await go.UploadLocalFile(currentPlatform, currentOwner, currentRepo, fullPath, local, msg);
+    } catch(e) {
+      result = '调用异常: ' + e.message;
+    }
+    try { offProgress(); } catch(e) {}
+
+    if (!result) {
+      document.getElementById('uploadrepo-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;">上传失败: 空返回值</div>';
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+      return false;
+    }
+
+    try {
+      const data = JSON.parse(result);
+      if (data.error) {
+        document.getElementById('uploadrepo-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;word-break:break-all;">上传失败: ' + data.error + '</div>';
+        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+        return false;
+      }
+      showToast('上传成功');
+      renderFiles();
+      return true;
+    } catch(e) {
+      document.getElementById('uploadrepo-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;word-break:break-all;">上传失败: ' + result + '</div>';
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+      return false;
+    }
+  });
+}
+
+function showUploadRepoFolder() {
+  const modalId = showModal('上传文件夹到仓库', `
+    <div class="form-group">
+      <label class="form-label">仓库目标路径</label>
+      <input type="text" class="form-input" id="uploadfolder-path" value="${currentFilePath ? currentFilePath + '/' : ''}" placeholder="留空则上传到根目录">
+    </div>
+    <div class="form-group">
+      <label class="form-label">本地文件夹</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="uploadfolder-local" readonly>
+        <button class="btn btn-ghost" onclick="browseFolder('uploadfolder-local')">浏览</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">提交说明</label>
+      <input type="text" class="form-input" id="uploadfolder-message" value="批量上传文件">
+    </div>
+    <div id="uploadfolder-progress" style="display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+        <span id="uploadfolder-progress-file">准备上传...</span>
+        <span id="uploadfolder-progress-percent">0%</span>
+      </div>
+      <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+        <div id="uploadfolder-progress-bar" style="height:100%;background:var(--primary);width:0%;transition:width 0.3s;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:4px;" id="uploadfolder-progress-count"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-light);">将递归上传文件夹中的所有文件，保持目录结构</div>
+  `, async () => {
+    const p = document.getElementById('uploadfolder-path').value.trim().replace(/\/$/, '');
+    const local = document.getElementById('uploadfolder-local').value;
+    const msg = document.getElementById('uploadfolder-message').value || '批量上传文件';
+    if (!local) { showToast('请选择本地文件夹'); return false; }
+
+    // 显示进度条，禁用按钮
+    document.getElementById('uploadfolder-progress').style.display = 'block';
+    const confirmBtn = document.getElementById(modalId + '-confirm');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '上传中...'; }
+
+    // 监听进度事件
+    const offProgress = window.runtime.EventsOn('upload-progress', (data) => {
+      try {
+        const prog = JSON.parse(data);
+        document.getElementById('uploadfolder-progress-file').textContent = prog.file || '';
+        document.getElementById('uploadfolder-progress-percent').textContent = prog.percent + '%';
+        document.getElementById('uploadfolder-progress-bar').style.width = prog.percent + '%';
+        document.getElementById('uploadfolder-progress-count').textContent = prog.current + ' / ' + prog.total;
+      } catch(e) {}
+    });
+
+    const result = await go.UploadFolder(currentPlatform, currentOwner, currentRepo, p, local, msg);
+    offProgress();
+
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('上传失败: ' + data.error); return false; }
+      showToast('上传完成: 成功 ' + data.success + ' 个, 失败 ' + data.failed + ' 个');
+      renderFiles();
+      document.getElementById(modalId).remove();
+      return true;
+    } catch(e) { showToast('上传失败'); return false; }
+  });
+}
+
+async function browseFolder(inputId) {
+  const folder = await go.BrowseFolder();
+  if (folder) {
+    document.getElementById(inputId).value = folder;
+  }
+}
+
+async function downloadRepoFile(url, name) {
+  if (!url) { showToast('无法下载'); return; }
+  showPrompt('下载文件', '保存路径:', name, async (savePath) => {
+    if (!savePath) return;
+    const ok = await go.DownloadFile(url, savePath);
+    showToast(ok ? '下载完成' : '下载失败');
+  });
+}
+
+async function deleteRepoFile(path) {
+  showConfirm('删除文件', '确定删除 ' + path + ' ?', async () => {
+    const ok = await go.DeleteRepoFile(currentPlatform, currentOwner, currentRepo, path, '删除文件');
+    showToast(ok ? '删除成功' : '删除失败');
+    if (ok) renderFiles();
+  });
+}
+
+async function deleteAllFiles() {
+  const targetPath = currentFilePath || '(根目录)';
+  showConfirm('全部删除', '确定要删除 ' + targetPath + ' 下的所有文件吗？此操作不可恢复！', async () => {
+    const modalId = showModal('正在删除...', `
+      <div style="padding:20px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);margin-bottom:8px;">
+          <span id="delete-all-file">准备中...</span>
+          <span id="delete-all-count">已删除: 0</span>
+        </div>
+        <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+          <div id="delete-all-bar" style="height:100%;background:#dc2626;width:0%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+    `, null, true);
+    const offProgress = window.runtime.EventsOn('delete-progress', (data) => {
+      try {
+        const prog = JSON.parse(data);
+        document.getElementById('delete-all-file').textContent = prog.file || '';
+        document.getElementById('delete-all-count').textContent = '已删除: ' + prog.deleted + (prog.failed > 0 ? ' / 失败: ' + prog.failed : '');
+      } catch(e) {}
+    });
+    const result = await go.DeleteAllFiles(currentPlatform, currentOwner, currentRepo, currentFilePath, '批量删除文件');
+    offProgress();
+    try {
+      document.getElementById(modalId).remove();
+    } catch(e) {}
+    try {
+      const data = JSON.parse(result);
+      if (data.error) {
+        showToast('删除失败: ' + data.error);
+      } else {
+        showToast('删除完成: 成功 ' + data.deleted + ' 个' + (data.failed > 0 ? '，失败 ' + data.failed + ' 个' : ''));
+      }
+    } catch(e) {
+      showToast('删除完成');
+    }
+    renderFiles();
+  });
+}
+
+// 分支管理
+async function showBranches() {
+  if (!currentRepo) { showToast('请先选择仓库'); return; }
+  showModal('分支管理 - ' + currentRepo, `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <span style="font-size:13px;color:var(--text-muted);">共 <span id="branch-count">0</span> 个分支</span>
+      <button class="btn btn-primary btn-sm" onclick="showCreateBranch()">+ 新建分支</button>
+    </div>
+    <div id="branch-list"><div class="loading"><div class="loading-spinner"></div>加载中...</div></div>
+  `, null, true);
+  const result = await go.GetBranches(currentPlatform, currentOwner, currentRepo);
+  try {
+    const data = JSON.parse(result);
+    if (data.error) {
+      document.getElementById('branch-list').innerHTML = '<div class="empty">加载失败: ' + data.error + '</div>';
+      return;
+    }
+    const branches = Array.isArray(data) ? data : [];
+    document.getElementById('branch-count').textContent = branches.length;
+    const html = branches.length > 0 ? branches.map(b => `
+      <div class="list-item" style="padding:12px 0;border-bottom:1px solid var(--border);">
+        <div class="list-item-icon" style="background:#ede9fe;color:#7c3aed;width:32px;height:32px;font-size:14px;">🌿</div>
+        <div class="list-item-content">
+          <div class="list-item-title" style="font-size:13px;">${b.name}</div>
+          <div class="list-item-desc" style="font-size:11px;">最后提交: ${b.commit ? b.commit.sha.substring(0,7) : '-'}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${b.protected ? '<span class="badge badge-warning">受保护</span>' : '<span class="badge badge-gray">普通</span>'}
+          ${!b.protected ? `<button class="btn btn-danger btn-sm" onclick="deleteBranch('${b.name}')">删除</button>` : ''}
+        </div>
+      </div>
+    `).join('') : '<div class="empty">暂无分支</div>';
+    document.getElementById('branch-list').innerHTML = html;
+  } catch(e) {
+    document.getElementById('branch-list').innerHTML = '<div class="empty">解析失败</div>';
+  }
+}
+
+function showCreateBranch() {
+  showModal('新建分支', `
+    <div class="form-group">
+      <label class="form-label">分支名称</label>
+      <input type="text" class="form-input" id="new-branch-name" placeholder="输入新分支名称">
+    </div>
+    <div class="form-group">
+      <label class="form-label">基准分支</label>
+      <input type="text" class="form-input" id="new-branch-base" placeholder="master / main" value="master">
+    </div>
+  `, async () => {
+    const name = document.getElementById('new-branch-name').value.trim();
+    const base = document.getElementById('new-branch-base').value.trim();
+    if (!name) { showToast('请输入分支名称'); return false; }
+    const result = await go.CreateBranch(currentPlatform, currentOwner, currentRepo, name, base);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('创建失败: ' + data.error); return false; }
+      showToast('创建成功');
+      showBranches();
+      return true;
+    } catch(e) { showToast('创建失败'); return false; }
+  });
+}
+
+async function deleteBranch(name) {
+  showConfirm('删除分支', '确定删除分支 ' + name + ' 吗？此操作不可恢复！', async () => {
+    const result = await go.DeleteBranch(currentPlatform, currentOwner, currentRepo, name);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('删除失败: ' + data.error); return; }
+      showToast('删除成功');
+      showBranches();
+    } catch(e) { showToast('删除失败'); }
+  });
+}
+
+async function renderBranches() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetBranches(currentPlatform, currentOwner, currentRepo);
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`; return; }
+    const branches = Array.isArray(data) ? data : [];
+    c.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">分支管理 - ${currentRepo}</div>
+          <div class="page-subtitle">共 ${branches.length} 个分支</div>
+        </div>
+      </div>
+      <div class="card">
+        ${branches.map(b => `
+          <div class="list-item">
+            <div class="list-item-icon" style="background:#ede9fe;color:#7c3aed;">🌿</div>
+            <div class="list-item-content">
+              <div class="list-item-title">${b.name}</div>
+              <div class="list-item-desc">最后提交: ${b.commit ? b.commit.sha.substring(0,7) : '-'}</div>
+            </div>
+            ${b.protected ? '<span class="badge badge-warning">受保护</span>' : '<span class="badge badge-gray">普通</span>'}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    c.innerHTML = '<div class="empty">解析失败</div>';
+  }
+}
+
+// 提交记录
+async function renderCommits() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetCommits(currentPlatform, currentOwner, currentRepo, '');
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`; return; }
+    const commits = Array.isArray(data) ? data : [];
+    c.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">提交记录 - ${currentRepo}</div>
+          <div class="page-subtitle">最近 ${commits.length} 条提交</div>
+        </div>
+      </div>
+      <div class="card">
+        ${commits.map(cm => `
+          <div class="list-item">
+            <div class="list-item-icon" style="background:#dbeafe;color:#2563eb;">${(cm.commit.author.name || '?').charAt(0).toUpperCase()}</div>
+            <div class="list-item-content">
+              <div class="list-item-title">${cm.commit.message.split('\n')[0]}</div>
+              <div class="list-item-desc">${cm.commit.author.name} · ${cm.sha.substring(0,7)} · ${new Date(cm.commit.author.date).toLocaleString()}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    c.innerHTML = '<div class="empty">解析失败</div>';
+  }
+}
+
+// Issue
+async function renderIssues() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetIssues(currentPlatform, currentOwner, currentRepo, '');
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`; return; }
+    const issues = Array.isArray(data) ? data : [];
+    c.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Issue - ${currentRepo}</div>
+          <div class="page-subtitle">共 ${issues.length} 个开放 Issue</div>
+        </div>
+        <button class="btn btn-primary" onclick="showCreateIssue()">+ 新建 Issue</button>
+      </div>
+      <div class="card">
+        ${issues.map(i => `
+          <div class="list-item" onclick="viewIssue(${i.number})">
+            <div class="list-item-icon" style="background:${i.state === 'open' ? '#d1fae5' : '#fee2e2'};color:${i.state === 'open' ? '#059669' : '#dc2626'};">
+              ${i.state === 'open' ? '🟢' : '🔴'}
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">#${i.number} ${i.title}</div>
+              <div class="list-item-desc">${i.user ? i.user.login : '?'} · ${new Date(i.created_at).toLocaleDateString()}</div>
+            </div>
+            <span class="badge ${i.state === 'open' ? 'badge-success' : 'badge-danger'}">${i.state}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    c.innerHTML = '<div class="empty">解析失败</div>';
+  }
+}
+
+function showCreateIssue() {
+  showModal('新建 Issue', `
+    <div class="form-group">
+      <label class="form-label">标题</label>
+      <input type="text" class="form-input" id="issue-title">
+    </div>
+    <div class="form-group">
+      <label class="form-label">内容</label>
+      <textarea class="form-textarea" id="issue-body"></textarea>
+    </div>
+  `, async () => {
+    const title = document.getElementById('issue-title').value.trim();
+    const body = document.getElementById('issue-body').value;
+    if (!title) { showToast('请输入标题'); return false; }
+    const result = await go.CreateIssue(currentPlatform, currentOwner, currentRepo, title, body);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('创建失败: ' + data.error); return false; }
+      showToast('创建成功');
+      renderIssues();
+      return true;
+    } catch(e) { showToast('创建失败'); return false; }
+  });
+}
+
+async function viewIssue(number) {
+  const comments = await go.GetIssueComments(currentPlatform, currentOwner, currentRepo, number);
+  let commentsHTML = '';
+  try {
+    const cdata = JSON.parse(comments);
+    if (Array.isArray(cdata)) {
+      commentsHTML = cdata.map(c => `
+        <div style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${c.user ? c.user.login : '?'}</div>
+          <div style="font-size:12px;color:var(--text-muted);white-space:pre-wrap;">${c.body || ''}</div>
+        </div>
+      `).join('');
+    }
+  } catch(e) {}
+  showModal('Issue #' + number, commentsHTML || '<div class="empty">暂无评论</div>', null, true);
+}
+
+// Pull Request
+async function renderPulls() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetPullRequests(currentPlatform, currentOwner, currentRepo, '');
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`; return; }
+    const pulls = Array.isArray(data) ? data : [];
+    c.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Pull Request - ${currentRepo}</div>
+          <div class="page-subtitle">共 ${pulls.length} 个开放 PR</div>
+        </div>
+      </div>
+      <div class="card">
+        ${pulls.map(p => `
+          <div class="list-item">
+            <div class="list-item-icon" style="background:${p.state === 'open' ? '#d1fae5' : '#fee2e2'};color:${p.state === 'open' ? '#059669' : '#dc2626'};">
+              ${p.state === 'open' ? '🟢' : '🔴'}
+            </div>
+            <div class="list-item-content">
+              <div class="list-item-title">#${p.number} ${p.title}</div>
+              <div class="list-item-desc">${p.user ? p.user.login : '?'} · ${p.head ? p.head.ref : '?'} → ${p.base ? p.base.ref : '?'}</div>
+            </div>
+            <span class="badge ${p.state === 'open' ? 'badge-success' : 'badge-danger'}">${p.state}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    c.innerHTML = '<div class="empty">解析失败</div>';
+  }
+}
+
+// Release
+async function renderReleases() {
+  const c = document.getElementById('content');
+  if (!currentRepo) {
+    c.innerHTML = '<div class="empty">请先在「仓库管理」中选择一个仓库</div>';
+    return;
+  }
+  c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>加载中...</div>';
+  const result = await go.GetReleases(currentPlatform, currentOwner, currentRepo);
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { c.innerHTML = `<div class="empty">加载失败: ${data.error}</div>`; return; }
+    const releases = Array.isArray(data) ? data : [];
+    window._currentReleases = releases;
+    c.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Release - ${currentRepo}</div>
+          <div class="page-subtitle">共 ${releases.length} 个版本</div>
+        </div>
+        <button class="btn btn-primary" onclick="showCreateRelease()">+ 创建 Release</button>
+      </div>
+      <div class="card">
+        ${releases.map((r, idx) => `
+          <div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-weight:700;color:var(--primary);font-size:15px;">${r.tag_name || ''}</span>
+                ${r.draft ? '<span class="badge badge-warning">草稿</span>' : ''}
+                ${r.prerelease ? '<span class="badge badge-purple">预发布</span>' : ''}
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost btn-sm" onclick="showEditRelease(${idx})">编辑</button>
+                <button class="btn btn-success btn-sm" onclick="showUploadAsset(${r.id})">上传文件</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRelease(${r.id})">删除</button>
+              </div>
+            </div>
+            <div style="font-size:13px;color:var(--text-muted);">${r.name || ''}</div>
+            ${r.body ? `<div style="font-size:12px;color:var(--text-light);white-space:pre-wrap;">${r.body}</div>` : ''}
+            ${r.assets && r.assets.length > 0 ? `
+              <div style="margin-top:4px;">
+                ${r.assets.map(a => `
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f8fafc;border-radius:6px;margin-bottom:4px;font-size:12px;">
+                    <span>📎 ${a.name || ''} <span style="color:var(--text-light);">(${formatSize(a.size)})</span></span>
+                    <div style="display:flex;gap:6px;">
+                      <button class="btn btn-ghost btn-sm" onclick="downloadRepoFile('${a.browser_download_url || ''}','${a.name || ''}')">下载</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteAsset(${r.id}, ${a.id}, '${(a.name || '').replace(/'/g, "\\'")}')">删除</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) {
+    showParseError(c, result, e);
+  }
+}
+
+function showCreateRelease() {
+  showModal('创建 Release', `
+    <div class="form-group">
+      <label class="form-label">Tag 名称</label>
+      <input type="text" class="form-input" id="release-tag" placeholder="如 v1.0.0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">标题</label>
+      <input type="text" class="form-input" id="release-name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">更新说明</label>
+      <textarea class="form-textarea" id="release-body"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="checkbox-item"><input type="checkbox" id="release-draft"> 草稿</label>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-item"><input type="checkbox" id="release-prerelease"> 预发布</label>
+      </div>
+    </div>
+  `, async () => {
+    const tag = document.getElementById('release-tag').value.trim();
+    const name = document.getElementById('release-name').value.trim();
+    const body = document.getElementById('release-body').value;
+    const draft = document.getElementById('release-draft').checked;
+    const pre = document.getElementById('release-prerelease').checked;
+    if (!tag) { showToast('请输入 Tag'); return false; }
+    const result = await go.CreateRelease(currentPlatform, currentOwner, currentRepo, tag, name, body, draft, pre);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('创建失败: ' + data.error); return false; }
+      showToast('创建成功');
+      renderReleases();
+      return true;
+    } catch(e) { showToast('创建失败'); return false; }
+  });
+}
+
+function showEditRelease(idx) {
+  const r = window._currentReleases[idx];
+  if (!r) return;
+  showModal('编辑 Release', `
+    <div class="form-group">
+      <label class="form-label">Tag 名称</label>
+      <input type="text" class="form-input" id="edit-release-tag" value="${r.tag_name || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">标题</label>
+      <input type="text" class="form-input" id="edit-release-name" value="${r.name || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">更新说明</label>
+      <textarea class="form-textarea" id="edit-release-body"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="checkbox-item"><input type="checkbox" id="edit-release-draft" ${r.draft ? 'checked' : ''}> 草稿</label>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-item"><input type="checkbox" id="edit-release-prerelease" ${r.prerelease ? 'checked' : ''}> 预发布</label>
+      </div>
+    </div>
+  `, async () => {
+    const tag = document.getElementById('edit-release-tag').value.trim();
+    const name = document.getElementById('edit-release-name').value.trim();
+    const body = document.getElementById('edit-release-body').value;
+    const draft = document.getElementById('edit-release-draft').checked;
+    const pre = document.getElementById('edit-release-prerelease').checked;
+    if (!tag) { showToast('请输入 Tag'); return false; }
+    const result = await go.EditRelease(currentPlatform, currentOwner, currentRepo, r.id, tag, name, body, draft, pre);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) { showToast('保存失败: ' + data.error); return false; }
+      showToast('保存成功');
+      renderReleases();
+      return true;
+    } catch(e) { showToast('保存失败'); return false; }
+  });
+  // 延迟填充body
+  setTimeout(() => {
+    const bodyEl = document.getElementById('edit-release-body');
+    if (bodyEl) {
+      bodyEl.value = r.body || '';
+    }
+  }, 50);
+}
+
+function showUploadAsset(releaseID) {
+  const modalId = showModal('上传文件到 Release', `
+    <div class="form-group">
+      <label class="form-label">选择文件</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="asset-local" readonly>
+        <button class="btn btn-ghost" onclick="browseFile('asset-local')">浏览</button>
+      </div>
+    </div>
+    <div id="asset-progress" style="display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+        <span id="asset-progress-file">正在上传...</span>
+        <span id="asset-progress-percent">0%</span>
+      </div>
+      <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+        <div id="asset-progress-bar" style="height:100%;background:var(--primary);width:0%;transition:width 0.3s;"></div>
+      </div>
+    </div>
+  `, async () => {
+    const local = document.getElementById('asset-local').value;
+    if (!local) { showToast('请选择文件'); return false; }
+
+    // 显示进度条，禁用按钮
+    document.getElementById('asset-progress').style.display = 'block';
+    const confirmBtn = document.getElementById(modalId + '-confirm');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '上传中...'; }
+
+    // 监听进度事件
+    const offProgress = window.runtime.EventsOn('upload-progress', (data) => {
+      try {
+        const prog = JSON.parse(data);
+        document.getElementById('asset-progress-file').textContent = prog.file || '';
+        document.getElementById('asset-progress-percent').textContent = prog.percent + '%';
+        document.getElementById('asset-progress-bar').style.width = prog.percent + '%';
+      } catch(e) {}
+    });
+
+    let result;
+    try {
+      result = await go.UploadAsset(currentPlatform, currentOwner, currentRepo, releaseID, local);
+    } catch(e) {
+      result = '调用异常: ' + e.message;
+    }
+    try { offProgress(); } catch(e) {}
+
+    if (!result) {
+      document.getElementById('asset-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;">上传失败: 空返回值</div>';
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+      return false;
+    }
+
+    try {
+      const data = JSON.parse(result);
+      if (data.error) {
+        document.getElementById('asset-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;word-break:break-all;">上传失败: ' + data.error + '</div>';
+        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+        return false;
+      }
+      showToast('上传成功');
+      renderReleases();
+      return true;
+    } catch(e) {
+      document.getElementById('asset-progress').innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px;background:#fef2f2;border-radius:6px;word-break:break-all;">上传失败: ' + result + '</div>';
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '确定'; }
+      return false;
+    }
+  });
+}
+
+async function deleteRelease(id) {
+  showConfirm('删除 Release', '确定删除这个 Release?', async () => {
+    const result = await go.DeleteRelease(currentPlatform, currentOwner, currentRepo, id);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) {
+        showModal('删除失败', `<div style="color:#dc2626;font-size:13px;word-break:break-all;white-space:pre-wrap;padding:10px 0;">${data.error}</div>`);
+        return false;
+      }
+      showToast('删除成功');
+      renderReleases();
+      return true;
+    } catch(e) {
+      showModal('删除失败', `<div style="color:#dc2626;font-size:13px;word-break:break-all;white-space:pre-wrap;padding:10px 0;">原始返回: ${result || '空'}\n错误: ${e.message}</div>`);
+      return false;
+    }
+  });
+}
+
+async function deleteAsset(releaseID, assetID, assetName) {
+  showConfirm('删除文件', '确定删除文件 ' + (assetName || '') + ' ?', async () => {
+    const result = await go.DeleteAsset(currentPlatform, currentOwner, currentRepo, releaseID, assetID, assetName);
+    try {
+      const data = JSON.parse(result);
+      if (data.error) {
+        showModal('删除失败', `<div style="color:#dc2626;font-size:13px;word-break:break-all;white-space:pre-wrap;padding:10px 0;">${data.error}</div>`);
+        return false;
+      }
+      showToast('删除成功');
+      renderReleases();
+      return true;
+    } catch(e) {
+      showModal('删除失败', `<div style="color:#dc2626;font-size:13px;word-break:break-all;white-space:pre-wrap;padding:10px 0;">原始返回: ${result || '空'}\n错误: ${e.message}</div>`);
+      return false;
+    }
+  });
+}
+
+// 搜索
+function renderSearch() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">搜索仓库</div>
+        <div class="page-subtitle">在 ${currentPlatform === 'github' ? 'GitHub' : 'Gitee'} 上搜索公开仓库</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <input type="text" class="form-input" id="search-keyword" placeholder="输入关键词搜索..." style="flex:1;" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="btn btn-primary" onclick="doSearch()">搜索</button>
+        </div>
+        <div id="search-results"><div class="empty">输入关键词开始搜索</div></div>
+      </div>
+    </div>
+  `;
+}
+
+async function doSearch() {
+  const kw = document.getElementById('search-keyword') ? document.getElementById('search-keyword').value.trim() : document.getElementById('global-search').value.trim();
+  if (!kw) { showToast('请输入关键词'); return; }
+  const results = document.getElementById('search-results');
+  if (results) results.innerHTML = '<div class="loading"><div class="loading-spinner"></div>搜索中...</div>';
+  const result = await go.SearchRepos(currentPlatform, kw);
+  try {
+    const data = JSON.parse(result);
+    if (data.error) { if (results) results.innerHTML = '<div class="empty">搜索失败</div>'; return; }
+    const items = data.items || data || [];
+    if (results) {
+      results.innerHTML = items.slice(0, 20).map(r => `
+        <div class="list-item" onclick="go.OpenURL('${r.html_url}')">
+          <div class="list-item-icon" style="background:#dbeafe;color:#2563eb;">📦</div>
+          <div class="list-item-content">
+            <div class="list-item-title">${r.full_name}</div>
+            <div class="list-item-desc">${r.description || '无描述'}</div>
+          </div>
+          <div class="list-item-meta">
+            <span>⭐ ${r.stargazers_count || 0}</span>
+          </div>
+        </div>
+      `).join('') || '<div class="empty">无结果</div>';
+    }
+  } catch(e) {
+    if (results) results.innerHTML = '<div class="empty">搜索失败</div>';
+  }
+}
+
+// 设置
+function renderSettings() {
+  const c = document.getElementById('content');
+  const tokens = go ? go.LoadTokens() : {github:'',gitee:''};
+  c.innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">设置</div>
+        <div class="page-subtitle">配置 API Token 与平台信息</div>
+      </div>
+    </div>
+    <div class="card" style="max-width:600px;">
+      <div class="card-header"><div class="card-title">API Token</div></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">GitHub Token</label>
+          <div style="display:flex;gap:8px;">
+            <input type="password" class="form-input" id="token-github" placeholder="ghp_xxxxxxxxxxxx" style="flex:1;">
+            <button class="btn btn-danger btn-sm" onclick="clearToken('github')">清除</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gitee Token</label>
+          <div style="display:flex;gap:8px;">
+            <input type="password" class="form-input" id="token-gitee" placeholder="xxxxxxxxxxxx" style="flex:1;">
+            <button class="btn btn-danger btn-sm" onclick="clearToken('gitee')">清除</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveAllTokens()">保存 Token</button>
+      </div>
+    </div>
+    <div class="card" style="max-width:600px;margin-top:16px;">
+      <div class="card-header"><div class="card-title">关于软件</div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;">
+          <img src="app_icon.png" style="width:64px;height:64px;border-radius:16px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+          <div style="flex:1;">
+            <div style="font-size:18px;font-weight:700;color:var(--text);">DaoGitAPI</div>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px;">版本 v1.0.0</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:8px;line-height:1.6;">GitHub / Gitee 双平台 API 管理工具，一站式管理仓库、文件、分支、提交、Issue、Pull Request、Release 等所有功能。</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:13px;color:var(--text-muted);">作者</span>
+            <span style="font-size:13px;color:var(--primary);cursor:pointer;font-weight:500;" onclick="go.OpenURL('https://www.daomak.com')">Daomak ↗</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:13px;color:var(--text-muted);">GitHub 开源</span>
+            <span style="font-size:13px;color:var(--primary);cursor:pointer;font-weight:500;" onclick="go.OpenURL('https://github.com/Daomak/DaoGitAPI')">github.com/Daomak/DaoGitAPI ↗</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:var(--text-muted);">Gitee 开源</span>
+            <span style="font-size:13px;color:var(--primary);cursor:pointer;font-weight:500;" onclick="go.OpenURL('https://gitee.com/daomak/daogitapi')">gitee.com/daomak/daogitapi ↗</span>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--text-light);">© 2026 Daomak. All rights reserved.</div>
+      </div>
+    </div>
+  `;
+  if (go) {
+    go.LoadTokens().then(t => {
+      document.getElementById('token-github').value = t.github || '';
+      document.getElementById('token-gitee').value = t.gitee || '';
+    });
+  }
+}
+
+async function saveAllTokens() {
+  const gh = document.getElementById('token-github').value;
+  const ge = document.getElementById('token-gitee').value;
+  const ok = await go.SaveTokens(gh, ge);
+  showToast(ok ? '保存成功' : '保存失败');
+  loadUserInfo();
+}
+
+async function clearToken(platform) {
+  if (platform === 'github') {
+    document.getElementById('token-github').value = '';
+    const ge = document.getElementById('token-gitee').value;
+    await go.SaveTokens('', ge);
+    showToast('GitHub Token 已清除');
+  } else {
+    document.getElementById('token-gitee').value = '';
+    const gh = document.getElementById('token-github').value;
+    await go.SaveTokens(gh, '');
+    showToast('Gitee Token 已清除');
+  }
+  loadUserInfo();
+}
+
+// 工具函数
+function formatSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+async function browseFile(inputId) {
+  const file = await go.BrowseFile();
+  if (file) {
+    document.getElementById(inputId).value = file;
+  }
+}
+
+function showParseError(element, result, e) {
+  const preview = result ? String(result).substring(0, 500) : '空返回';
+  element.innerHTML = '<div class="empty" style="text-align:left;max-width:700px;padding:20px;">' +
+    '<div style="color:#dc2626;font-weight:bold;font-size:14px;margin-bottom:10px;">解析失败: ' + (e ? e.message : '未知错误') + '</div>' +
+    '<div style="font-size:12px;color:#666;word-break:break-all;white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px;max-height:300px;overflow:auto;">原始返回 (' + (result ? String(result).length : 0) + ' 字符):\n' + preview + '</div>' +
+    '</div>';
+}
+
+function showToast(msg) {
+  const old = document.querySelector('.toast');
+  if (old) old.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+function showConfirm(title, message, onOk) {
+  const container = document.getElementById('modals');
+  const id = 'confirm-' + Date.now();
+  container.innerHTML = `
+    <div class="modal-overlay show" id="${id}" onclick="if(event.target===this)document.getElementById('${id}').remove()">
+      <div class="modal" style="min-width:360px;max-width:420px;">
+        <div class="modal-title">${title}</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:8px;">${message}</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="document.getElementById('${id}').remove()">取消</button>
+          <button class="btn btn-danger" id="${id}-ok">确定</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById(id + '-ok').onclick = async () => {
+    const btn = document.getElementById(id + '-ok');
+    if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
+    try {
+      if (onOk) {
+        const result = await onOk();
+        if (result !== false) {
+          document.getElementById(id).remove();
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = '确定'; }
+        }
+      } else {
+        document.getElementById(id).remove();
+      }
+    } catch(e) {
+      if (btn) { btn.disabled = false; btn.textContent = '确定'; }
+      showToast('操作异常: ' + e.message);
+    }
+  };
+}
+
+function showPrompt(title, message, defaultValue, onOk) {
+  const container = document.getElementById('modals');
+  const id = 'prompt-' + Date.now();
+  container.innerHTML = `
+    <div class="modal-overlay show" id="${id}" onclick="if(event.target===this)document.getElementById('${id}').remove()">
+      <div class="modal" style="min-width:380px;max-width:440px;">
+        <div class="modal-title">${title}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">${message}</div>
+        <div class="form-group">
+          <input type="text" class="form-input" id="${id}-input" value="${defaultValue || ''}">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="document.getElementById('${id}').remove()">取消</button>
+          <button class="btn btn-primary" id="${id}-ok">确定</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const input = document.getElementById(id + '-input');
+  input.focus();
+  input.select();
+  document.getElementById(id + '-ok').onclick = () => {
+    const val = input.value;
+    document.getElementById(id).remove();
+    if (onOk) onOk(val);
+  };
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') document.getElementById(id + '-ok').click();
+  };
+}
+
+function showModal(title, bodyHTML, onConfirm, noConfirm) {
+  const container = document.getElementById('modals');
+  const id = 'modal-' + Date.now();
+  container.innerHTML = `
+    <div class="modal-overlay show" id="${id}" onclick="if(event.target===this)document.getElementById('${id}').remove()">
+      <div class="modal">
+        <div class="modal-title">${title}</div>
+        ${bodyHTML}
+        ${noConfirm ? '' : `
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="document.getElementById('${id}').remove()">取消</button>
+          <button class="btn btn-primary" id="${id}-confirm">确定</button>
+        </div>`}
+      </div>
+    </div>
+  `;
+  if (onConfirm) {
+    document.getElementById(id + '-confirm').onclick = async () => {
+      const result = await onConfirm();
+      if (result !== false) {
+        document.getElementById(id).remove();
+      }
+    };
+  }
+  return id;
+}
+
+// 初始化
+window.onload = () => {
+  updatePlatformUI();
+  loadUserInfo();
+  renderRepos();
+};
+</script>
+</body>
+</html>
