@@ -360,6 +360,12 @@
     flex: 1;
     overflow-y: auto;
     padding: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .content::-webkit-scrollbar {
+    display: none;
+  }
   }
   .content::-webkit-scrollbar { width: 8px; }
   .content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
